@@ -24,11 +24,11 @@ def recursive_pass_generator(length, charlist):
 
 def recursive_core(charlist, prefix, length, charlist_size, passwords):
     if length == 0:
-        return prefix
+        return passwords.append(prefix)
 
     for i in range(charlist_size):
         new_prefix = prefix + charlist[i]
-        passwords.append(recursive_core(charlist, new_prefix, length - 1, charlist_size, passwords))
+        recursive_core(charlist, new_prefix, length - 1, charlist_size, passwords)
 
 
 def crack_password(length):
@@ -41,6 +41,7 @@ def crack_password(length):
     charlist = [letter for letter in string.ascii_lowercase]
     # passwords = iterative_pass_generator(length, charlist)
     passwords = recursive_pass_generator(length, charlist)
+    pp.pprint(len(passwords))
     z = zipfile.ZipFile('secret.zip')
     tries = 0
 
