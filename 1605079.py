@@ -73,10 +73,10 @@ class KeyHandler:
     def schedule_keys(self):
         # storing the key as a bitvector in the first array
         self.generated_keys.append(BitVector(textstring=self.key))
-        self.print_keys()
         prev_rc = BitVector(hexstring='01')
 
-        for round in range(1, 2):
+        for round in range(1, 11):
+
             current_key = self.generated_keys[len(self.generated_keys) - 1].get_text_from_bitvector()
             w = [
                 BitVector(textstring=current_key[:4]),
@@ -85,60 +85,53 @@ class KeyHandler:
                 BitVector(textstring=current_key[12:16])
             ]
 
-            self.utils.print_bitvector(w[3],format="hex")
-
             # print(BitVector(textstring=w3).getHexStringFromBitVector())
-
             modified_word, next_rc = self.g(w[3], prev_rc, round)
-            prev_rc = next_rc
-            self.utils.print_bitvector(prev_rc, 'hex')
+            prev_rc = BitVector(textstring=next_rc.get_text_from_bitvector()[:1])
+            # self.utils.print_bitvector(prev_rc, format="hex")
+            # self.utils.print_bitvector(prev_rc, 'hex')
 
             # first word of next key
             w[0] = w[0] ^ modified_word
 
             # then find the consecutive words
             for i in range(1, 4):
-                print('before w[i] = ',end='')
-                self.utils.print_bitvector(w[i], 'hex')
-                print('before w[i-1] = ',end='')
-                self.utils.print_bitvector(w[i-1], 'hex')
+                # # print('before w[i] = ', end='')
+                # self.utils.print_bitvector(w[i], 'hex')
+                # # print('before w[i-1] = ', end='')
+                # self.utils.print_bitvector(w[i - 1], 'hex')
 
-                w[i] = w[i-1] ^ w[i]
-                print('after w[i] = ',end='')
-                self.utils.print_bitvector(w[i], format="hex")
+                w[i] = w[i - 1] ^ w[i]
 
+            s = ''.join(bv.get_text_from_bitvector() for bv in w)
 
+            self.generated_keys.append(BitVector(textstring=s))
 
-            print(modified_word.get_hex_string_from_bitvector())
-
-    def g(self, word, prev_rc, round=1):
+    def g(self, word, prev_rc, round):
         # print(word.get_hex_string_from_bitvector())
         word = word.deep_copy()
 
         # circular left shift the byte
-        word << 8
-
-        # print(word.get_hex_string_from_bitvector())
+        word = word << 8
 
         # byte substitution
         word = self.utils.substitute(word.get_text_from_bitvector())
-        # print(f'Byte Substituted {word.get_hex_string_from_bitvector()}')
 
-        # adding round constant
         rc_list = self.utils.generate_rounding_const(
             prev_rc,
             round
         )
+        # self.utils.print_bitvector(prev_rc, format="hex")
         # print(len(rc_list[0]))
         s = ''.join(bv.get_text_from_bitvector() for bv in rc_list)
         rc = BitVector(textstring=s)
+        # self.utils.print_bitvector(rc, format="hex")
         return word ^ rc, rc
-
-        # print(word.get_hex_string_from_bitvector())
 
     def print_keys(self):
         for key in self.generated_keys:
-            print(key.get_hex_string_from_bitvector())
+            hex_format = key.get_hex_string_from_bitvector()
+            print(hex_format)
 
 
 class Utility:
@@ -155,6 +148,8 @@ class Utility:
         return BitVector(textstring=result)
 
     def generate_rounding_const(self, prev_rc, round):
+
+        # self.print_bitvector(prev_rc, format="hex")
         hex_80 = BitVector(hexstring='80')
         rc2 = BitVector(hexstring='00')
         rc3 = BitVector(hexstring='00')
@@ -171,7 +166,6 @@ class Utility:
     @staticmethod
     def gf_multiply(bv1, bv2=BitVector(hexstring="02")):
         AES_modulus = BitVector(bitstring='100011011')
-        print(bv1.gf_multiply_modular(bv2, AES_modulus, 8).get_hex_string_from_bitvector())
         return bv1.gf_multiply_modular(bv2, AES_modulus, 8)
 
     @staticmethod
@@ -192,3 +186,4 @@ if __name__ == '__main__':
     keyHandler = KeyHandler(Utility())
     print(keyHandler.format_input())
     keyHandler.schedule_keys()
+    keyHandler.print_keys()
