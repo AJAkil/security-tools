@@ -131,7 +131,9 @@ class KeyHandler:
     def print_keys(self):
         for key in self.generated_keys:
             hex_format = key.get_hex_string_from_bitvector()
-            print(hex_format)
+            for i in range(0,len(hex_format),2):
+                print(hex_format[i:i+2],end=' ')
+            print()
 
 
 class Utility:
