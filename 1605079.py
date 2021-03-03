@@ -1,5 +1,6 @@
 from BitVector import *
 import numpy as np
+import pprint as pp
 
 key = 'Thats my Kung Fu'
 
@@ -192,18 +193,25 @@ class Utility:
 
 
 class Encrypt:
-    def __init__(self,keys, state_matrix):
+    def __init__(self, keys, state_matrix, utils):
         self.round_keys = keys
         self.current_state_matrix = state_matrix
+        self.utils = utils
 
     def add_round_key(self, state_matrix, round=0):
-        pass
+        round_key = u.format_to_matrix(self.round_keys[round].get_hex_string_from_bitvector())
+        state_matrix = u.format_to_matrix(state_matrix)
 
-    def encrypt(self):
-        pass
+        # pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in round_key])
+        # pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in state_matrix])
 
-    def decrypt(self):
-        pass
+        result = [[state_matrix[row][col] ^ round_key[row][col]
+                   for col in range(len(state_matrix))]
+                  for row in range(len(state_matrix))]
+
+        self.current_state_matrix = result
+
+        pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in result])
 
     def byte_substitution(self):
         pass
@@ -213,6 +221,13 @@ class Encrypt:
 
     def mix_columns(self):
         pass
+
+    def encrypt(self):
+        pass
+
+
+
+
 
 
 class Decrypt:
@@ -225,6 +240,14 @@ if __name__ == '__main__':
     keyHandler.schedule_keys()
     keyHandler.print_keys()
     generated_keys = keyHandler.generated_keys
-    print((generated_keys[0].get_hex_string_from_bitvector()))
     u = Utility()
-    u.format_to_matrix()
+    text = BitVector(textstring='Two One Nine Two')
+    print(f'length of text: {len(text.get_text_from_bitvector())}')
+    # format the keys
+    # u.format_to_matrix()
+    encrypt = Encrypt(
+        generated_keys,
+        text.get_hex_string_from_bitvector(),
+        u
+    )
+    encrypt.add_round_key(encrypt.current_state_matrix)
