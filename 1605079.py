@@ -1,4 +1,5 @@
 from BitVector import *
+import numpy as np
 
 key = 'Thats my Kung Fu'
 
@@ -131,8 +132,8 @@ class KeyHandler:
     def print_keys(self):
         for key in self.generated_keys:
             hex_format = key.get_hex_string_from_bitvector()
-            for i in range(0,len(hex_format),2):
-                print(hex_format[i:i+2],end=' ')
+            for i in range(0, len(hex_format), 2):
+                print(hex_format[i:i + 2], end=' ')
             print()
 
 
@@ -179,8 +180,42 @@ class Utility:
         elif format == 'ASCII':
             print(f'BitVector in ASCII: {bitvector.get_bitvector_in_ascii()}')
 
+    @staticmethod
+    def format_to_matrix(hex_string='5468617473206d79204b756e67204675'):
+        matrix = []
+        for i in range(0, len(hex_string), 2):
+            matrix.append(hex_string[i:i + 2])
 
-class AES:
+        matrix = np.transpose(np.array([matrix]).reshape(4, 4)).tolist()
+        matrix = [[BitVector(hexstring=element) for element in row] for row in matrix]
+        return matrix
+
+
+class Encrypt:
+    def __init__(self,keys, state_matrix):
+        self.round_keys = keys
+        self.current_state_matrix = state_matrix
+
+    def add_round_key(self, state_matrix, round=0):
+        pass
+
+    def encrypt(self):
+        pass
+
+    def decrypt(self):
+        pass
+
+    def byte_substitution(self):
+        pass
+
+    def shift_rows(self):
+        pass
+
+    def mix_columns(self):
+        pass
+
+
+class Decrypt:
     pass
 
 
@@ -189,3 +224,7 @@ if __name__ == '__main__':
     print(keyHandler.format_input())
     keyHandler.schedule_keys()
     keyHandler.print_keys()
+    generated_keys = keyHandler.generated_keys
+    print((generated_keys[0].get_hex_string_from_bitvector()))
+    u = Utility()
+    u.format_to_matrix()
