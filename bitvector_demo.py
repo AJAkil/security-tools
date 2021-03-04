@@ -76,6 +76,21 @@ AES_modulus = BitVector(bitstring='100011011')
 
 bv1 = BitVector(hexstring="80")
 bv2 = BitVector(hexstring="02")
+
+a = BitVector(hexstring='01')
+b = BitVector(hexstring='02')
+c = BitVector(hexstring='03')
+d = BitVector(hexstring='01')
+
+a1 = BitVector(hexstring='63')
+b1 = BitVector(hexstring='2f')
+c1 = BitVector(hexstring='af')
+d1 = BitVector(hexstring='a2')
+
+res = BitVector(hexstring="00") ^ a.gf_multiply_modular(a1,AES_modulus,8) ^ b.gf_multiply_modular(b1, AES_modulus,8) ^ c.gf_multiply_modular(c1, AES_modulus, 8) ^ d.gf_multiply_modular(d1, AES_modulus, 8)
+
+print(f'res={res.get_hex_string_from_bitvector()}')
+
 bv4 = bv1 ^ bv2
 print(bv4.get_hex_string_from_bitvector())
 bv3 = bv1.gf_multiply_modular(bv2, AES_modulus, 8)

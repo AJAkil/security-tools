@@ -158,17 +158,18 @@ class Utility:
         rc2 = BitVector(hexstring='00')
         rc3 = BitVector(hexstring='00')
         rc4 = BitVector(hexstring='00')
+        multiplier = BitVector(hexstring="02")
         rounding_constants = [rc2, rc3, rc4]
 
         if round > 1 and prev_rc <= hex_80:
-            rounding_constants.insert(0, self.gf_multiply(prev_rc))
+            rounding_constants.insert(0, self.gf_multiply(prev_rc, multiplier))
         else:
             rounding_constants.insert(0, prev_rc)
 
         return rounding_constants
 
     @staticmethod
-    def gf_multiply(bv1, bv2=BitVector(hexstring="02")):
+    def gf_multiply(bv1, bv2):
         AES_modulus = BitVector(bitstring='100011011')
         return bv1.gf_multiply_modular(bv2, AES_modulus, 8)
 
@@ -203,12 +204,32 @@ class Utility:
     def print_matrix(matrix):
         pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in matrix])
 
-    @staticmethod
-    def multiply_matrix(matrix, row, col):
-        pass
+    def multiply_matrix(self, matrix, row, col):
+        self.print_matrix(Mixer)
+        self.print_matrix(matrix)
+        result = [[BitVector(hexstring='00') for _ in range(col)] for _ in range(row)]
+        entry = BitVector(hexstring='00')
+        self.print_matrix(result)
+
+        for i in range(row):
+            for j in range(col):
+                for k in range(row):
+                    entry = self.gf_multiply(Mixer[i][k], matrix[k][j])
+                    temp = BitVector(hexstring=result[i][j].get_hex_string_from_bitvector()) ^ entry
+                    result[i][j] = temp
+
+        self.print_matrix(result)
+        return result
 
     @staticmethod
     def row_shift(single_row, row, is_left):
+        """
+        for cyclic row shifting of by amount=row left or right
+        :param single_row: row to be shifted
+        :param row: the amount to be shifted
+        :param is_left: left shift or right shift
+        :return: shifted row
+        """
         hex_representation = [elem.get_hex_string_from_bitvector() for elem in single_row]
 
         if is_left:
@@ -239,7 +260,7 @@ class Encrypt:
 
         self.current_state_matrix = result
 
-        #pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in result])
+        # pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in result])
 
     def matrix_byte_substitution(self):
         for row in range(len(self.current_state_matrix)):
@@ -252,10 +273,11 @@ class Encrypt:
         for row_no, current_row in enumerate(self.current_state_matrix):
             self.current_state_matrix[row_no] = self.utils.row_shift(current_row, row_no, True)
 
-        self.utils.print_matrix(self.current_state_matrix)
+        #self.utils.print_matrix(self.current_state_matrix)
 
     def mix_columns(self):
-        pass
+        mat_len = 4
+        self.utils.multiply_matrix(self.current_state_matrix, mat_len, mat_len)
 
     def encrypt(self):
         pass
@@ -284,3 +306,4 @@ if __name__ == '__main__':
     encrypt.add_round_key(encrypt.current_state_matrix)
     encrypt.matrix_byte_substitution()
     encrypt.shift_rows()
+    encrypt.mix_columns()
