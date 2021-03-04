@@ -191,6 +191,33 @@ class Utility:
         matrix = [[BitVector(hexstring=element) for element in row] for row in matrix]
         return matrix
 
+    @staticmethod
+    def byte_substitution(matrix_entry):
+        matrix_entry = matrix_entry.deep_copy()
+        int_val = matrix_entry.intValue()
+        s_val = Sbox[int_val]
+        s_val = BitVector(intVal=s_val, size=8)
+        return s_val
+
+    @staticmethod
+    def print_matrix(matrix):
+        pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in matrix])
+
+    @staticmethod
+    def multiply_matrix(matrix, row, col):
+        pass
+
+    @staticmethod
+    def row_shift(single_row, row, is_left):
+        hex_representation = [elem.get_hex_string_from_bitvector() for elem in single_row]
+
+        if is_left:
+            row = -row
+
+        rolled = np.roll(np.array(hex_representation), row).tolist()
+        bit_vector = [BitVector(hexstring=string) for string in rolled]
+        return bit_vector
+
 
 class Encrypt:
     def __init__(self, keys, state_matrix, utils):
@@ -205,29 +232,33 @@ class Encrypt:
         # pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in round_key])
         # pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in state_matrix])
 
+        # Element wise XOR
         result = [[state_matrix[row][col] ^ round_key[row][col]
                    for col in range(len(state_matrix))]
                   for row in range(len(state_matrix))]
 
         self.current_state_matrix = result
 
-        pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in result])
+        #pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in result])
 
-    def byte_substitution(self):
-        pass
+    def matrix_byte_substitution(self):
+        for row in range(len(self.current_state_matrix)):
+            for col in range(len(self.current_state_matrix)):
+                self.current_state_matrix[row][col] = self.utils.byte_substitution(self.current_state_matrix[row][col])
+
+        # self.utils.print_matrix(self.current_state_matrix)
 
     def shift_rows(self):
-        pass
+        for row_no, current_row in enumerate(self.current_state_matrix):
+            self.current_state_matrix[row_no] = self.utils.row_shift(current_row, row_no, True)
+
+        self.utils.print_matrix(self.current_state_matrix)
 
     def mix_columns(self):
         pass
 
     def encrypt(self):
         pass
-
-
-
-
 
 
 class Decrypt:
@@ -251,3 +282,5 @@ if __name__ == '__main__':
         u
     )
     encrypt.add_round_key(encrypt.current_state_matrix)
+    encrypt.matrix_byte_substitution()
+    encrypt.shift_rows()
