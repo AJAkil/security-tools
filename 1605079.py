@@ -59,7 +59,7 @@ InvMixer = [
 
 class KeyHandler:
 
-    def __init__(self, utility, key='Thats my Kung Fu'):
+    def __init__(self, utility, key='BUET CSE16 Batch'):
         self.utils = utility
         self.key = key
         self.generated_keys = []
@@ -248,7 +248,11 @@ class Utility:
         return bit_vector
 
 
-class Encrypt:
+class Cipher:
+    pass
+
+
+class AES:
     def __init__(self, keys, state_matrix, utils):
         """
         constructor for encryption class
@@ -296,11 +300,54 @@ class Encrypt:
         self.current_state_matrix = self.utils.multiply_matrix(self.current_state_matrix, mat_len, mat_len, inverse)
 
     def encrypt(self):
-        pass
+        self.add_round_key(encrypt.current_state_matrix)
+
+        for i in range(1, 10):
+            self.matrix_byte_substitution(inverse=False)
+            self.shift_rows()
+            # print(f'mix columns after round {i}')
+            self.mix_columns()
+            # u.print_matrix(encrypt.current_state_matrix)
+            self.add_round_key(encrypt.current_state_matrix, round=i)
+            # print(f'after round {i}')
+            # u.print_matrix(encrypt.current_state_matrix)
+
+        self.matrix_byte_substitution(inverse=False)
+        self.shift_rows()
+        self.add_round_key(encrypt.current_state_matrix, round=10)
+
+    def get_hidden_text(self):
+        hex_matrix = [[elem.get_hex_string_from_bitvector() for elem in row] for row in self.current_state_matrix]
+        n = np.transpose(np.array(hex_matrix))
+        return ''.join(elem for elem in n.reshape(16)), hex_matrix
+
+    def decrypt(self):
+        cipher_hex_string, _ = self.get_hidden_text()
+        # round 0
+        self.add_round_key(cipher_hex_string, inverse=True, round=10)
+
+        for i in range(1, 10):
+            self.shift_rows(is_left=False)
+            self.matrix_byte_substitution(inverse=True)
+            # print(f'mix columns after round {i}')
+            self.add_round_key(encrypt.current_state_matrix, round=10 - i)
+            self.mix_columns(inverse=True)
+            # u.print_matrix(encrypt.current_state_matrix)
+            # print(f'after round {i}')
+            # u.print_matrix(encrypt.current_state_matrix)
+
+        self.shift_rows(is_left=False)
+        self.matrix_byte_substitution(inverse=True)
+        self.add_round_key(encrypt.current_state_matrix, inverse=True, round=0)
+
+        _, hex_matrix = self.get_hidden_text()
+        n = np.transpose(np.array(hex_matrix))
+        hex_string = ''.join(elem for elem in n.reshape(16))
+        deciphered = BitVector(hexstring=hex_string).get_text_from_bitvector()
+        print(deciphered)
 
 
-class Decrypt:
-    pass
+
 
 
 if __name__ == '__main__':
@@ -310,63 +357,36 @@ if __name__ == '__main__':
     keyHandler.print_keys()
     generated_keys = keyHandler.generated_keys
     u = Utility()
-    text = BitVector(textstring='Two One Nine Tw1')
+    text = BitVector(textstring='WillGraduateSoon')
     print(f'length of text: {len(text.get_text_from_bitvector())}')
     # format the keys
     # u.format_to_matrix()
-    encrypt = Encrypt(
+    encrypt = AES(
         generated_keys,
         text.get_hex_string_from_bitvector(),
         u
     )
 
+    encrypt.encrypt()
+    encrypt.decrypt()
+
     # initial round - 0 encrypt
-    encrypt.add_round_key(encrypt.current_state_matrix)
-
-    for i in range(1, 10):
-        encrypt.matrix_byte_substitution(inverse=False)
-        encrypt.shift_rows()
-        print(f'mix columns after round {i}')
-        encrypt.mix_columns()
-        u.print_matrix(encrypt.current_state_matrix)
-        encrypt.add_round_key(encrypt.current_state_matrix, round=i)
-        print(f'after round {i}')
-        u.print_matrix(encrypt.current_state_matrix)
-
-    encrypt.matrix_byte_substitution(inverse=False)
-    encrypt.shift_rows()
-    encrypt.add_round_key(encrypt.current_state_matrix, round=10)
-    print('after round 10')
-    u.print_matrix(encrypt.current_state_matrix)
-
-    hex_matrix = [[elem.get_hex_string_from_bitvector() for elem in row] for row in encrypt.current_state_matrix]
-    n = np.transpose(np.array(hex_matrix))
-    cipher_hex_string = ''.join(elem for elem in n.reshape(16))
-    # print(cipher_hex_string)
+    # encrypt.add_round_key(encrypt.current_state_matrix)
     #
-    # for elem in n.reshape(16):
-    #     print(elem, end=' ')
+    # for i in range(1, 10):
+    #     encrypt.matrix_byte_substitution(inverse=False)
+    #     encrypt.shift_rows()
+    #     # print(f'mix columns after round {i}')
+    #     encrypt.mix_columns()
+    #     # u.print_matrix(encrypt.current_state_matrix)
+    #     encrypt.add_round_key(encrypt.current_state_matrix, round=i)
+    #     # print(f'after round {i}')
+    #     # u.print_matrix(encrypt.current_state_matrix)
+    #
+    # encrypt.matrix_byte_substitution(inverse=False)
+    # encrypt.shift_rows()
+    # encrypt.add_round_key(encrypt.current_state_matrix, round=10)
+    # # print('after round 10')
+    # # u.print_matrix(encrypt.current_state_matrix)
 
-    # DECRYPT part
-    # round 0
-    encrypt.add_round_key(cipher_hex_string, inverse=True, round=10)
 
-    for i in range(1, 10):
-        encrypt.shift_rows(is_left=False)
-        encrypt.matrix_byte_substitution(inverse=True)
-        #print(f'mix columns after round {i}')
-        encrypt.add_round_key(encrypt.current_state_matrix, round=10-i)
-        encrypt.mix_columns(inverse=True)
-        #u.print_matrix(encrypt.current_state_matrix)
-        #print(f'after round {i}')
-        #u.print_matrix(encrypt.current_state_matrix)
-
-    encrypt.shift_rows(is_left=False)
-    encrypt.matrix_byte_substitution(inverse=True)
-    encrypt.add_round_key(encrypt.current_state_matrix, inverse=True, round=0)
-
-    hex_matrix = [[elem.get_hex_string_from_bitvector() for elem in row] for row in encrypt.current_state_matrix]
-    n = np.transpose(np.array(hex_matrix))
-    hex_string = ''.join(elem for elem in n.reshape(16))
-    deciphered = BitVector(hexstring=hex_string).get_text_from_bitvector()
-    print(deciphered)
