@@ -184,6 +184,7 @@ class Utility:
 
     @staticmethod
     def format_to_matrix(hex_string='5468617473206d79204b756e67204675'):
+        print('for hex_string', len(hex_string))
         matrix = []
         for i in range(0, len(hex_string), 2):
             matrix.append(hex_string[i:i + 2])
@@ -193,7 +194,7 @@ class Utility:
         return matrix
 
     @staticmethod
-    def byte_substitution(matrix_entry):
+    def byte_substitution(matrix_entry, inverse=False):
         matrix_entry = matrix_entry.deep_copy()
         int_val = matrix_entry.intValue()
         s_val = Sbox[int_val]
@@ -205,11 +206,11 @@ class Utility:
         pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in matrix])
 
     def multiply_matrix(self, matrix, row, col):
-        self.print_matrix(Mixer)
-        self.print_matrix(matrix)
+        #self.print_matrix(Mixer)
+        #self.print_matrix(matrix)
         result = [[BitVector(hexstring='00') for _ in range(col)] for _ in range(row)]
         entry = BitVector(hexstring='00')
-        self.print_matrix(result)
+        #self.print_matrix(result)
 
         for i in range(row):
             for j in range(col):
@@ -218,7 +219,7 @@ class Utility:
                     temp = BitVector(hexstring=result[i][j].get_hex_string_from_bitvector()) ^ entry
                     result[i][j] = temp
 
-        self.print_matrix(result)
+        #self.print_matrix(result)
         return result
 
     @staticmethod
@@ -242,13 +243,20 @@ class Utility:
 
 class Encrypt:
     def __init__(self, keys, state_matrix, utils):
+        """
+        constructor for encryption class
+        :param keys: list of keys in form of BitVector
+        :param state_matrix: the state matrix in hex_string
+        :param utils: utility object
+        """
         self.round_keys = keys
         self.current_state_matrix = state_matrix
         self.utils = utils
 
     def add_round_key(self, state_matrix, round=0):
         round_key = u.format_to_matrix(self.round_keys[round].get_hex_string_from_bitvector())
-        state_matrix = u.format_to_matrix(state_matrix)
+        if round == 0:
+            state_matrix = u.format_to_matrix(state_matrix)
 
         # pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in round_key])
         # pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in state_matrix])
@@ -262,10 +270,11 @@ class Encrypt:
 
         # pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in result])
 
-    def matrix_byte_substitution(self):
+    def matrix_byte_substitution(self, inverse):
         for row in range(len(self.current_state_matrix)):
             for col in range(len(self.current_state_matrix)):
-                self.current_state_matrix[row][col] = self.utils.byte_substitution(self.current_state_matrix[row][col])
+                self.current_state_matrix[row][col] = self.utils.byte_substitution(self.current_state_matrix[row][col],
+                                                                                   inverse=inverse)
 
         # self.utils.print_matrix(self.current_state_matrix)
 
@@ -277,7 +286,7 @@ class Encrypt:
 
     def mix_columns(self):
         mat_len = 4
-        self.utils.multiply_matrix(self.current_state_matrix, mat_len, mat_len)
+        self.current_state_matrix = self.utils.multiply_matrix(self.current_state_matrix, mat_len, mat_len)
 
     def encrypt(self):
         pass
@@ -304,6 +313,38 @@ if __name__ == '__main__':
         u
     )
     encrypt.add_round_key(encrypt.current_state_matrix)
-    encrypt.matrix_byte_substitution()
+
+    for i in range(1, 10):
+        encrypt.matrix_byte_substitution(inverse=False)
+        encrypt.shift_rows()
+        print(f'mix columns after round {i}')
+        encrypt.mix_columns()
+        u.print_matrix(encrypt.current_state_matrix)
+        encrypt.add_round_key(encrypt.current_state_matrix, round=i)
+        print(f'after round {i}')
+        u.print_matrix(encrypt.current_state_matrix)
+
+    encrypt.matrix_byte_substitution(inverse=False)
     encrypt.shift_rows()
-    encrypt.mix_columns()
+    encrypt.add_round_key(encrypt.current_state_matrix, round=10)
+    print('after round 10')
+    u.print_matrix(encrypt.current_state_matrix)
+
+    hex_matrix = [[elem.get_hex_string_from_bitvector() for elem in row] for row in encrypt.current_state_matrix]
+    n = np.transpose(np.array(hex_matrix))
+    hex_string = ''.join(elem for elem in n.reshape(16))
+    print(hex_string)
+
+    for elem in n.reshape(16):
+        print(elem, end=' ')
+
+    # DECRYPT part
+    # round 0
+    encrypt.add_round_key(hex_string)
+
+
+
+
+
+
+
