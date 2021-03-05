@@ -1,6 +1,7 @@
 from BitVector import *
 import numpy as np
 import pprint as pp
+import math
 
 key = 'Thats my Kung Fu'
 
@@ -247,6 +248,26 @@ class Utility:
         bit_vector = [BitVector(hexstring=string) for string in rolled]
         return bit_vector
 
+    @staticmethod
+    def format_input(inp, input_type='text'):
+        original_length = len(inp)
+        print(original_length)
+        if input_type == 'text':
+            if original_length % 16 != 0:
+                print('h')
+                nearest_multiple = 16 * math.ceil(original_length / 16)
+                return inp.ljust(nearest_multiple, ' ')
+            return inp
+        else:
+            pass
+
+    @staticmethod
+    def format_long_inputs(input, chunk_size):
+        length = len(input)
+        size = chunk_size
+        for i in range(0, length, size):
+            yield input[i:i + size]
+
 
 class Cipher:
     pass
@@ -319,10 +340,12 @@ class AES:
     def get_hidden_text(self):
         hex_matrix = [[elem.get_hex_string_from_bitvector() for elem in row] for row in self.current_state_matrix]
         n = np.transpose(np.array(hex_matrix))
-        return ''.join(elem for elem in n.reshape(16)), hex_matrix
+        cipher_hex_string = ''.join(elem for elem in n.reshape(16))
+        text_string = BitVector(hexstring=cipher_hex_string).get_text_from_bitvector()
+        return cipher_hex_string, hex_matrix, text_string
 
     def decrypt(self):
-        cipher_hex_string, _ = self.get_hidden_text()
+        cipher_hex_string, _, _ = self.get_hidden_text()
         # round 0
         self.add_round_key(cipher_hex_string, inverse=True, round=10)
 
@@ -340,14 +363,9 @@ class AES:
         self.matrix_byte_substitution(inverse=True)
         self.add_round_key(encrypt.current_state_matrix, inverse=True, round=0)
 
-        _, hex_matrix = self.get_hidden_text()
-        n = np.transpose(np.array(hex_matrix))
-        hex_string = ''.join(elem for elem in n.reshape(16))
-        deciphered = BitVector(hexstring=hex_string).get_text_from_bitvector()
+        _, hex_matrix, deciphered = self.get_hidden_text()
         print(deciphered)
-
-
-
+        return deciphered
 
 
 if __name__ == '__main__':
@@ -357,18 +375,26 @@ if __name__ == '__main__':
     keyHandler.print_keys()
     generated_keys = keyHandler.generated_keys
     u = Utility()
-    text = BitVector(textstring='WillGraduateSoon')
+    text = BitVector(textstring='1234567891234567')
     print(f'length of text: {len(text.get_text_from_bitvector())}')
     # format the keys
     # u.format_to_matrix()
-    encrypt = AES(
-        generated_keys,
-        text.get_hex_string_from_bitvector(),
-        u
-    )
 
-    encrypt.encrypt()
-    encrypt.decrypt()
+    deciphered = ''
+    inp = u.format_input('1234567891234567klk')
+    for text in u.format_long_inputs(inp, 16):
+        text = BitVector(textstring=text)
+        encrypt = AES(
+            generated_keys,
+            text.get_hex_string_from_bitvector(),
+            u
+        )
+        encrypt.encrypt()
+        deciphered += encrypt.decrypt()
+        # deciphered += encrypt.current_state_matrix
+    # print(list(u.format_long_inputs(inp, 16)))
+    deciphered = deciphered.rstrip()
+    print(len(deciphered))
 
     # initial round - 0 encrypt
     # encrypt.add_round_key(encrypt.current_state_matrix)
@@ -388,5 +414,3 @@ if __name__ == '__main__':
     # encrypt.add_round_key(encrypt.current_state_matrix, round=10)
     # # print('after round 10')
     # # u.print_matrix(encrypt.current_state_matrix)
-
-
