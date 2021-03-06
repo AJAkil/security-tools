@@ -2,6 +2,8 @@ from BitVector import *
 import numpy as np
 import pprint as pp
 import math
+import os
+import time
 
 key = 'Thats my Kung Fu'
 
@@ -60,7 +62,7 @@ InvMixer = [
 
 class KeyHandler:
 
-    def __init__(self, utility, key='BUET CSE16 Batch'):
+    def __init__(self, utility, key):
         self.utils = utility
         self.key = key
         self.generated_keys = []
@@ -71,6 +73,7 @@ class KeyHandler:
             self.key = self.key.ljust(16, '0')
         elif str_len > 16:
             self.key = self.key[:16]
+        print(self.key)
         return self.key
 
     def schedule_keys(self):
@@ -177,11 +180,12 @@ class Utility:
     @staticmethod
     def print_bitvector(bitvector, format):
         if format == 'string':
-            print(f'BitVector in string: {bitvector.get_text_from_bitvector()}')
+            print(f'{bitvector.get_text_from_bitvector()} [In STRING]')
         elif format == 'hex':
-            print(f'BitVector in hex: {bitvector.get_hex_string_from_bitvector()}')
+            print(f'{bitvector.get_hex_string_from_bitvector()} [In HEX]')
         elif format == 'ASCII':
-            print(f'BitVector in ASCII: {bitvector.get_bitvector_in_ascii()}')
+            print(f'{bitvector.get_bitvector_in_ascii()} [In ASCII]')
+        print()
 
     @staticmethod
     def format_to_matrix(hex_string='5468617473206d79204b756e67204675'):
@@ -189,7 +193,7 @@ class Utility:
         matrix = []
         for i in range(0, len(hex_string), 2):
             matrix.append(hex_string[i:i + 2])
-
+        # print(len(matrix))
         matrix = np.transpose(np.array([matrix]).reshape(4, 4)).tolist()
         matrix = [[BitVector(hexstring=element) for element in row] for row in matrix]
         return matrix
@@ -251,15 +255,16 @@ class Utility:
     @staticmethod
     def format_input(inp, input_type='text'):
         original_length = len(inp)
-        print(original_length)
-        if input_type == 'text':
-            if original_length % 16 != 0:
-                print('h')
-                nearest_multiple = 16 * math.ceil(original_length / 16)
-                return inp.ljust(nearest_multiple, ' ')
-            return inp
-        else:
-            pass
+        # print(original_length)
+
+        if original_length % 16 != 0:
+            nearest_multiple = 16 * math.ceil(original_length / 16)
+            if input_type == 'text':
+                return inp.ljust(nearest_multiple, ' '), nearest_multiple - original_length
+            else:
+                return inp.ljust(nearest_multiple, '0'), nearest_multiple - original_length
+
+        return inp, 0
 
     @staticmethod
     def format_long_inputs(input, chunk_size):
@@ -268,9 +273,17 @@ class Utility:
         for i in range(0, length, size):
             yield input[i:i + size]
 
-
-class Cipher:
-    pass
+    @staticmethod
+    def read_file(file_name):
+        file = open(file_name, 'rb')
+        file_ext = os.path.splitext(file_name)
+        file_pointer = file.read()
+        try:
+            text_data = file_pointer.decode('utf-8')
+            return text_data, 'utf-8', file_pointer, file_ext
+        except:
+            hex_data = file_pointer.hex()
+            return hex_data, 'bin', file_pointer, file_ext
 
 
 class AES:
@@ -288,6 +301,7 @@ class AES:
     def add_round_key(self, state_matrix, inverse=False, round=0):
         round_key = u.format_to_matrix(self.round_keys[round].get_hex_string_from_bitvector())
         if (round == 0 and not inverse) or (inverse and round == 10):
+            # print(round)
             state_matrix = u.format_to_matrix(state_matrix)
 
         # pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in round_key])
@@ -341,11 +355,13 @@ class AES:
         hex_matrix = [[elem.get_hex_string_from_bitvector() for elem in row] for row in self.current_state_matrix]
         n = np.transpose(np.array(hex_matrix))
         cipher_hex_string = ''.join(elem for elem in n.reshape(16))
-        text_string = BitVector(hexstring=cipher_hex_string).get_text_from_bitvector()
-        return cipher_hex_string, hex_matrix, text_string
+        bv = BitVector(hexstring=cipher_hex_string)
+        text_string = bv.get_text_from_bitvector()
+        ascii_text = bv.get_bitvector_in_ascii()
+        return cipher_hex_string, hex_matrix, text_string, ascii_text
 
     def decrypt(self):
-        cipher_hex_string, _, _ = self.get_hidden_text()
+        cipher_hex_string, _, _,_ = self.get_hidden_text()
         # round 0
         self.add_round_key(cipher_hex_string, inverse=True, round=10)
 
@@ -363,54 +379,115 @@ class AES:
         self.matrix_byte_substitution(inverse=True)
         self.add_round_key(encrypt.current_state_matrix, inverse=True, round=0)
 
-        _, hex_matrix, deciphered = self.get_hidden_text()
-        print(deciphered)
-        return deciphered
+        deciphered_hex, hex_matrix, deciphered, ascii = self.get_hidden_text()
+        # print(deciphered)
+        return deciphered, deciphered_hex, ascii
 
 
 if __name__ == '__main__':
-    keyHandler = KeyHandler(Utility())
-    print(keyHandler.format_input())
-    keyHandler.schedule_keys()
-    keyHandler.print_keys()
-    generated_keys = keyHandler.generated_keys
-    u = Utility()
-    text = BitVector(textstring='1234567891234567')
-    print(f'length of text: {len(text.get_text_from_bitvector())}')
-    # format the keys
-    # u.format_to_matrix()
 
+    total_encrypt_time_elapsed = 0
+    total_decrypt_time_elapsed = 0
     deciphered = ''
-    inp = u.format_input('1234567891234567klk')
-    for text in u.format_long_inputs(inp, 16):
-        text = BitVector(textstring=text)
-        encrypt = AES(
-            generated_keys,
-            text.get_hex_string_from_bitvector(),
-            u
-        )
-        encrypt.encrypt()
-        deciphered += encrypt.decrypt()
-        # deciphered += encrypt.current_state_matrix
-    # print(list(u.format_long_inputs(inp, 16)))
-    deciphered = deciphered.rstrip()
-    print(len(deciphered))
+    deciphered_hex = ''
+    ciphered = ''
+    ciphered_hex = ''
 
-    # initial round - 0 encrypt
-    # encrypt.add_round_key(encrypt.current_state_matrix)
-    #
-    # for i in range(1, 10):
-    #     encrypt.matrix_byte_substitution(inverse=False)
-    #     encrypt.shift_rows()
-    #     # print(f'mix columns after round {i}')
-    #     encrypt.mix_columns()
-    #     # u.print_matrix(encrypt.current_state_matrix)
-    #     encrypt.add_round_key(encrypt.current_state_matrix, round=i)
-    #     # print(f'after round {i}')
-    #     # u.print_matrix(encrypt.current_state_matrix)
-    #
-    # encrypt.matrix_byte_substitution(inverse=False)
-    # encrypt.shift_rows()
-    # encrypt.add_round_key(encrypt.current_state_matrix, round=10)
-    # # print('after round 10')
-    # # u.print_matrix(encrypt.current_state_matrix)
+    u = Utility()
+
+    key, _, _, _ = u.read_file(input('Enter the key containing file: '))
+
+    keyHandler = KeyHandler(Utility(), key)
+    key = keyHandler.format_input()
+    print('Key:')
+    print(f'{key} [In ASCII]')
+    u.print_bitvector(BitVector(textstring=key), format="hex")
+
+    # print(keyHandler.format_input())
+
+    start_time_key_scheduling = time.time()
+    keyHandler.schedule_keys()
+    key_scheduling_time_elapsed = time.time() - start_time_key_scheduling
+
+    # keyHandler.print_keys()
+    generated_keys = keyHandler.generated_keys
+
+    data, type, file_pointer, ext = u.read_file(input('Please Give File Name to encrypt-decrypt: '))
+
+    if type == 'utf-8':
+        print(f'Plain Text:')
+        print(f'{data} [In ASCII]')
+        u.print_bitvector(BitVector(textstring=data), format="hex")
+    inp, extra_char_len = u.format_input(data, type)  # padding to a multiples of 16 for both text and binary
+
+    if type == 'utf-8':
+        for text in u.format_long_inputs(inp, 16):
+            text = BitVector(textstring=text)
+            encrypt = AES(
+                generated_keys,
+                text.get_hex_string_from_bitvector(),
+                u
+            )
+            start_time = time.time()
+            encrypt.encrypt()
+            cipher_hex_string, _, _, ascii_text = encrypt.get_hidden_text()
+
+            # concatenating the ciphered strings
+            ciphered_hex += cipher_hex_string
+            ciphered += ascii_text
+
+            total_encrypt_time_elapsed += time.time() - start_time
+
+            start_time_decrypt = time.time()
+            _, dec_hex, ascii_deciphered = encrypt.decrypt()
+            total_decrypt_time_elapsed += time.time() - start_time_decrypt
+
+            # concatenating the deciphered strings
+            deciphered += ascii_deciphered
+            deciphered_hex += dec_hex
+    else:
+        for text in u.format_long_inputs(inp, 32):
+            text = BitVector(hexstring=text)
+            encrypt = AES(
+                generated_keys,
+                text.get_hex_string_from_bitvector(),
+                u
+            )
+            start_time = time.time()
+            encrypt.encrypt()
+            total_encrypt_time_elapsed += time.time() - start_time
+
+            start_time_decrypt = time.time()
+            _, dec_hex, _ = encrypt.decrypt()
+            total_decrypt_time_elapsed += time.time() - start_time_decrypt
+            deciphered += dec_hex
+
+    # deciphered += encrypt.current_state_matrix
+    # print(list(u.format_long_inputs(inp, 16)))
+    # print(f'length after adding characters: {len(inp)}')
+    # print(f'decoded char length before cutting: {len(deciphered)}')
+    # # deciphered = deciphered[:len(deciphered) - extra_char_len]
+    # deciphered = deciphered[:len(deciphered) - extra_char_len]
+    # print(f'input character length: {len(data)}')
+    # print(f'decoded char length: {len(deciphered)}')
+    # print(len(data) == len(deciphered))
+
+    if type != 'utf-8':
+        data = file_pointer.fromhex(deciphered)
+        f = open(f'result.{ext}', 'wb')
+        f.write(data)
+
+    print('Cipher Text: ')
+    print(f'{ciphered_hex}[In HEX]')
+    print(f'{ciphered} [In ASCII]')
+    print()
+
+    print('Deciphered Text: ')
+    print(f'{deciphered_hex} [In HEX]')
+    print(f'{deciphered}[In ASCII]')
+    print()
+
+    print('Execution Time')
+    print(f'Key Scheduling: {key_scheduling_time_elapsed}')
+    print(f'Encryption Time: {total_encrypt_time_elapsed}')
+    print(f'Decrpytion Time: {total_decrypt_time_elapsed}')
