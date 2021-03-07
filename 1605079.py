@@ -445,15 +445,14 @@ if __name__ == '__main__':
             total_decrypt_time_elapsed += time.time() - start_time_decrypt
             deciphered += dec_hex
 
-    # deciphered += encrypt.current_state_matrix
-    # print(list(u.format_long_inputs(inp, 16)))
-    # print(f'length after adding characters: {len(inp)}')
-    # print(f'decoded char length before cutting: {len(deciphered)}')
-    # # deciphered = deciphered[:len(deciphered) - extra_char_len]
+
+    print(f'length after adding characters: {len(inp)}')
+    print(f'decoded char length before cutting: {len(deciphered)}')
     # deciphered = deciphered[:len(deciphered) - extra_char_len]
-    # print(f'input character length: {len(data)}')
-    # print(f'decoded char length: {len(deciphered)}')
-    # print(len(data) == len(deciphered))
+    deciphered = deciphered[:len(deciphered) - extra_char_len]
+    print(f'input character length: {len(data)}')
+    print(f'decoded char length: {len(deciphered)}')
+    print(len(data) == len(deciphered))
 
     if type != 'utf-8':
         data = file_pointer.fromhex(deciphered)
