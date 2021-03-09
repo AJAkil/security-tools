@@ -5,8 +5,6 @@ import math
 import os
 import time
 
-
-
 AES_modulus = BitVector(bitstring='100011011')
 Sbox = [i for i in range(256)]
 InvSbox = [0 for _ in range(256)]
@@ -23,6 +21,7 @@ def sbox_converter(value):
 Sbox = [sbox_converter(elem) for elem in Sbox[1:]]
 Sbox.insert(0, BitVector(hexstring='63'))
 
+
 def inverse_sbox_converter(index):
     bv = Sbox[index]
     InvSbox[bv.intValue()] = BitVector(intVal=index, size=8)
@@ -30,7 +29,6 @@ def inverse_sbox_converter(index):
 
 for index, elem in enumerate(Sbox):
     inverse_sbox_converter(index)
-
 
 Mixer = [
     [BitVector(hexstring="02"), BitVector(hexstring="03"), BitVector(hexstring="01"), BitVector(hexstring="01")],
@@ -192,7 +190,6 @@ class Utility:
             return InvSbox[int_val]
         return Sbox[int_val]
 
-
     @staticmethod
     def print_matrix(matrix):
         pp.pprint([[elem.get_hex_string_from_bitvector() for elem in row] for row in matrix])
@@ -259,7 +256,7 @@ class Utility:
     @staticmethod
     def read_file(file_name):
         file = open(file_name, 'rb')
-        file_ext = os.path.splitext(file_name)
+        file_ext = os.path.splitext(file_name)[1]
         file_pointer = file.read()
         try:
             text_data = file_pointer.decode('utf-8')
@@ -445,29 +442,28 @@ if __name__ == '__main__':
             total_decrypt_time_elapsed += time.time() - start_time_decrypt
             deciphered += dec_hex
 
-
-    print(f'length after adding characters: {len(inp)}')
-    print(f'decoded char length before cutting: {len(deciphered)}')
+    # print(f'length after adding characters: {len(inp)}')
+    # print(f'decoded char length before cutting: {len(deciphered)}')
+    # # deciphered = deciphered[:len(deciphered) - extra_char_len]
     # deciphered = deciphered[:len(deciphered) - extra_char_len]
-    deciphered = deciphered[:len(deciphered) - extra_char_len]
-    print(f'input character length: {len(data)}')
-    print(f'decoded char length: {len(deciphered)}')
-    print(len(data) == len(deciphered))
+    # print(f'input character length: {len(data)}')
+    # print(f'decoded char length: {len(deciphered)}')
+    # print(len(data) == len(deciphered))
 
     if type != 'utf-8':
         data = file_pointer.fromhex(deciphered)
-        f = open(f'result.{ext}', 'wb')
+        f = open(f'result{ext}', 'wb')
         f.write(data)
+    else:
+        print('Cipher Text: ')
+        print(f'{ciphered_hex}[In HEX]')
+        # print(f'{ciphered} [In ASCII]')
+        print()
 
-    print('Cipher Text: ')
-    print(f'{ciphered_hex}[In HEX]')
-    # print(f'{ciphered} [In ASCII]')
-    print()
-
-    print('Deciphered Text: ')
-    print(f'{deciphered_hex} [In HEX]')
-    print(f'{deciphered}[In ASCII]')
-    print()
+        print('Deciphered Text: ')
+        print(f'{deciphered_hex} [In HEX]')
+        print(f'{deciphered}[In ASCII]')
+        print()
 
     print('Execution Time')
     print(f'Key Scheduling: {key_scheduling_time_elapsed}')
