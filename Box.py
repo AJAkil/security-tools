@@ -28,7 +28,10 @@ print('hello hello hello', s.get_bitvector_in_hex())
 # pp.pprint([elem.get_hex_string_from_bitvector() for elem in SBox])
 
 def inverse_sbox_converter(index):
+    print(f'index = {index}')
     bv = SBox[index]
+    print(bv.intValue())
+    print(BitVector(intVal=index, size=8).getHexStringFromBitVector())
     InvSBox[bv.intValue()] = BitVector(intVal=index, size=8)
 
 
