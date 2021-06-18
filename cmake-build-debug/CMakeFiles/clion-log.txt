@@ -1,0 +1,33 @@
+C:\Users\Asus\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-2\211.6693.114\bin\cmake\win\bin\cmake.exe -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - NMake Makefiles" "\\wsl$\Ubuntu-20.04\home\akil\cpp_sockets\Learning Sockets"
+-- The C compiler identification is unknown
+-- The CXX compiler identification is unknown
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - failed
+-- Check for working C compiler: C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe
+-- Check for working C compiler: C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe - broken
+CMake Error at C:/Users/Asus/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-2/211.6693.114/bin/cmake/win/share/cmake-3.19/Modules/CMakeTestCCompiler.cmake:66 (message):
+  The C compiler
+
+    "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe"
+
+  is not able to compile a simple test program.
+
+  It fails with the following output:
+
+    Change Dir: //wsl$/Ubuntu-20.04/home/akil/cpp_sockets/Learning Sockets/cmake-build-debug/CMakeFiles/CMakeTmp
+    
+    Run Build Command(s):nmake /nologo cmTC_5e4f3\fast && NMAKE : fatal error U1073: don't know how to make 'cmTC_5e4f3\fast'
+    Stop.
+    
+    
+
+  
+
+  CMake will not be able to correctly generate this project.
+Call Stack (most recent call first):
+  CMakeLists.txt:2 (project)
+
+
+-- Configuring incomplete, errors occurred!
+See also "//wsl$/Ubuntu-20.04/home/akil/cpp_sockets/Learning Sockets/cmake-build-debug/CMakeFiles/CMakeOutput.log".
+See also "//wsl$/Ubuntu-20.04/home/akil/cpp_sockets/Learning Sockets/cmake-build-debug/CMakeFiles/CMakeError.log".
