@@ -107,7 +107,7 @@ int main() {
     //configure server
     server.sin_family = AF_INET;
     server.sin_port = htons(port_no);
-    server.sin_addr.s_addr = inet_addr(ip_address);
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     //connect to the remote server
     if (connect(socket_desc, (struct sockaddr *) &server, sizeof(server)) < 0) {
@@ -151,8 +151,8 @@ int main() {
         int received_message_size = sizeof(received_message) / sizeof(char);
         string server_message = convert_to_string(received_message, received_message_size);
 
-        cout << "The server message: " << "\n" << server_message << endl;
-        cout << tokenize(server_message, "\n") << endl;
+         cout << "The server message: " << "\n" << server_message.substr() << endl;
+        // cout << tokenize(server_message, "\n") << endl;
         // string jsonResponse = server_message.substr(server_message.find("{"), server_message.length() - 1);
         // size_t found = jsonResponse.find("token");
         //  if (found != string::npos)
