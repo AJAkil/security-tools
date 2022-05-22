@@ -4,3 +4,4 @@
 
 - Dictionary Attack
 - ZIP file cracker Brute Forcer
+- AES implementation from scratch
